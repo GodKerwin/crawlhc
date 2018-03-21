@@ -23,3 +23,11 @@ class HtmlDownloader(object):
         if response.status_code != 200:
             return None
         return response.text
+
+    def downloadContent(self, url):
+        if url is None:
+            return None
+        response = requests.get(url, headers=self.headers, proxies=random.choice(self.proxies_list), timeout=60)
+        if response.status_code != 200:
+            return None
+        return response.content

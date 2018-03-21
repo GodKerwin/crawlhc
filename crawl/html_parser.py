@@ -1,6 +1,11 @@
 from urllib.parse import urljoin
 
+import os
+
+import time
 from bs4 import BeautifulSoup
+
+from crawl import html_downloader
 
 
 class HtmlParser(object):
@@ -30,5 +35,21 @@ class HtmlParser(object):
 
     def parse_article(self, html_cont):
         soup = BeautifulSoup(html_cont, 'lxml')
+        content = ''
         title = soup.select('section.dBox > div.dTopBox > h1')[0].text.strip()
-        text = soup.select('section.dBox > div.dCon')
+        contents = soup.select('section.dBox > div.dCon > p')
+        for p in contents:
+            if p.text == '':
+                img = p.find('img')
+                if img:
+                    img_src = img.get('src').strip()
+                    img_suffix = os.path.splitext(img_src)[1]
+                    img_name = os.path.basename(os.path.splitext(img_src)[0]) + '_' + str(int(time.time())) + img_suffix
+                    html_cont = html_downloader.HtmlDownloader().downloadContent(img_src)
+                    with open(img_name, 'wb') as f:
+                        f.write(html_cont)
+                        f.close()
+                    print('<p><img src=\'%s\'></p>' % img_name)
+            else:
+                print('<p>%s</p>' % p.text.strip())
+        return title, content
