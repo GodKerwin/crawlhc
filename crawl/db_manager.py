@@ -58,8 +58,8 @@ class DbManager(object):
         self.end()
         return count
 
-    def select_news_by_cid(self, pid, cid, offset, size):
-        sql = 'select id, link from tb_news WHERE pid = %d and cid = %d and createAt = 0 limit %d, %d' % (pid, cid, offset, size)
+    def page_news_by_cid(self, pid, cid, offset, size):
+        sql = 'select id, link from tb_news WHERE pid = %d and cid = %d and createAt = 0 order by id limit %d, %d' % (pid, cid, offset, size)
         self._cursor.execute(sql)
         results = self._cursor.fetchall()
         result = {}

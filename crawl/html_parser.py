@@ -1,11 +1,7 @@
 import uuid
 from urllib.parse import urljoin
-
 import os
-
-import time
 from bs4 import BeautifulSoup
-
 from crawl import html_downloader
 
 
@@ -13,15 +9,27 @@ class HtmlParser(object):
     def parse_first_floor(self, html_cont, root_url):
         soup = BeautifulSoup(html_cont, 'lxml')
         urls = soup.select('section.navBox > article.IndexNav > ul > li > a')
-        result = [[url.text, urljoin(root_url, url.get('href'))] for url in urls]
-        result.pop(-1)
+        list_url = urljoin(root_url, urls.pop(-1).get('href'))
+        html_cont = html_downloader.HtmlDownloader().download(list_url)
+        if html_cont is None:
+            print('[parse_first_floor] skip because of 404! link[%s]' % list_url)
+            return None
+        soup = BeautifulSoup(html_cont, 'lxml')
+        urls = soup.select('section > div.ListBox2 > dl > dd > a')
+        result = [[url.text.replace('行业资讯', ''), urljoin(root_url, url.get('href'))] for url in urls]
         return result
 
     def parse_second_floor(self, html_cont, root_url):
         soup = BeautifulSoup(html_cont, 'lxml')
         urls = soup.select('section.navBox > article.hyIndexNav > ul > li > a')
+        list_url = urljoin(root_url, urls.pop(-1).get('href'))
+        html_cont = html_downloader.HtmlDownloader().download(list_url)
+        if html_cont is None:
+            print('[parse_second_floor] skip because of 404! link[%s]' % list_url)
+            return None
+        soup = BeautifulSoup(html_cont, 'lxml')
+        urls = soup.select('section > div.ListBox2 > dl > dd > a')
         result = [[url.text, urljoin(root_url, url.get('href'))] for url in urls]
-        result.pop(-1)
         return result
 
     def parse_third_floor(self, html_cont, root_url):
@@ -38,7 +46,7 @@ class HtmlParser(object):
         next_url = urljoin(root_url, soup.select('section.newsBox > article.pageBox > a:nth-of-type(3)')[0].get('href'))
         return [urljoin(root_url, url.get('href')) for url in urls], next_url, has_next
 
-    def parse_article(self, html_cont, pid, cid):
+    def parse_article(self, html_cont, root_url, pid, cid):
         soup = BeautifulSoup(html_cont, 'lxml')
         content = ''
         title = soup.select('section.dBox > div.dTopBox > h1')[0].text.strip()
@@ -54,11 +62,14 @@ class HtmlParser(object):
                     img_full_path = img_dir + img_name
                     if os.path.exists(img_dir) is False:
                         os.makedirs(img_dir)
-                    html_cont = html_downloader.HtmlDownloader().downloadContent(img_src)
-                    with open(img_full_path, 'wb') as f:
-                        f.write(html_cont)
-                        f.close()
-                    content += '<p><img src=\'%s\'></p>\r\n' % img_full_path
+                    try:
+                        html_cont = html_downloader.HtmlDownloader().downloadContent(img_src)
+                        with open(img_full_path, 'wb') as f:
+                            f.write(html_cont)
+                            f.close()
+                        content += '<p><img src=\'%s\'></p>\r\n' % img_full_path
+                    except:
+                        print('link(%s) img(%s) download fail' % (root_url, img_src))
                     img_no += 1
             else:
                 content += '<p>%s</p>\r\n' % p.text.strip().replace('慧聪网', '')

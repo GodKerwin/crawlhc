@@ -1,4 +1,3 @@
-import random
 import time
 import traceback
 
@@ -15,28 +14,27 @@ class Main(object):
 
     def collect_category(self, root_url):
         try:
-            categorys = []
             pid = 1
             html_cont = self.downloader.download(root_url)
             first_floor = self.parser.parse_first_floor(html_cont, root_url)
             for first in first_floor:
+                categorys = []
                 cid = 1
                 categorys.append([pid, 0, first[0], first[1]])
                 html_cont = self.downloader.download(first[1])
                 if html_cont is None:
-                    print('[collect_category] skip because of 404!')
+                    print('[collect_category] skip %s %s because of 404!' % (first[0], first[1]))
                     continue
+                print('[collect_category] collect %s %s' % (first[0], first[1]))
                 second_floor = self.parser.parse_second_floor(html_cont, first[1])
                 for second in second_floor:
                     categorys.append([pid, cid, second[0], second[1]])
                     cid += 1
                 pid += 1
-            self.db.save_category(categorys)
+                self.db.save_category(categorys)
         except:
-            print(traceback.print_exc())
+            traceback.print_exc()
             print('[collect_category] collect_category failed')
-        finally:
-            self.db.dispose()
 
     def crawl_all(self):
         for pid in range(self.db.count_pids()):
@@ -66,7 +64,7 @@ class Main(object):
                 urls, next_url, has_next = self.parser.parse_third_floor(html_cont, next_url)
                 self.db.save_url(pid, cid, urls)
         except:
-            print(traceback.print_exc())
+            traceback.print_exc()
             print('[collect_url] collect_url failed')
 
     def crawl_news(self, pid, cid):
@@ -77,19 +75,20 @@ class Main(object):
             print('[crawl_news] crawl article total %d' % total)
             while offset < total:
                 values = []
-                url_map = self.db.select_news_by_cid(pid, cid, offset, page_size)
-                print('[crawl_news] crawl article pid(%d) cid(%d) page(%d - %d)' % (pid, cid, offset + 1, offset + page_size))
+                url_map = self.db.page_news_by_cid(pid, cid, 0, page_size)
+                print('[crawl_news] crawl article pid(%d) cid(%d) page(%d - %d)' % (
+                pid, cid, offset + 1, offset + page_size))
                 for id in url_map:
                     html_cont = self.downloader.download(url_map[id])
                     if html_cont is None:
                         print('[crawl_news] skip because of 404!')
                         continue
-                    title, content = self.parser.parse_article(html_cont, pid, cid)
+                    title, content = self.parser.parse_article(html_cont, url_map[id], pid, cid)
                     values.append([title, content, int(time.time()), id])
                 self.db.update_news(values)
                 offset += page_size
         except:
-            print(traceback.print_exc())
+            traceback.print_exc()
             print('[crawl_news] crawl_news failed')
 
 
@@ -98,8 +97,8 @@ if __name__ == '__main__':
     try:
         root_url = 'https://m.hc360.com/info/'
         # main.collect_category(root_url)
-        # main.crawl_by_cid(10, 2)
+        main.crawl_by_cid(10, 6)
         # main.crawl_by_pid(1)
-        main.crawl_all()
+        # main.crawl_all()
     finally:
         main.db.dispose()
