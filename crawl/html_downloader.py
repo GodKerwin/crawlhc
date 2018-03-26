@@ -24,7 +24,7 @@ class HtmlDownloader(object):
             return None
         return response.text
 
-    def downloadContent(self, url):
+    def download_content(self, url):
         if url is None:
             return None
         response = requests.get(url, headers=self.headers, proxies=random.choice(self.proxies_list), timeout=60)

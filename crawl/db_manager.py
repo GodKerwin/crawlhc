@@ -1,3 +1,5 @@
+import threading
+
 import pymysql
 from DBUtils.PooledDB import PooledDB
 
@@ -6,6 +8,7 @@ from crawl import config
 
 class DbManager(object):
     __pool = None
+    lock = threading.RLock()
 
     def __init__(self):
         try:
@@ -46,41 +49,59 @@ class DbManager(object):
         return self._cursor.fetchone()
 
     def count_pids(self):
-        sql = 'SELECT count(pid) FROM tb_category where cid = 0'
+        sql = 'SELECT count(pid) FROM tb_category WHERE cid = 0'
         self._cursor.execute(sql)
         return self._cursor.fetchone()[0]
 
     # tb_news
     def save_url(self, pid, cid, urls):
-        sql = 'INSERT INTO tb_news (pid, cid, link) VALUES (%s, %s, %s)'
-        values = tuple([[pid, cid, url] for url in urls])
-        count = self._cursor.executemany(sql, values)
-        self.end()
-        return count
+        try:
+            DbManager.lock.acquire()
+            sql = 'INSERT INTO tb_news (pid, cid, link) VALUES (%s, %s, %s)'
+            values = tuple([[pid, cid, url] for url in urls])
+            count = self._cursor.executemany(sql, values)
+            self.end()
+            return count
+        except Exception as e:
+            print('[save_url] fail! message[%s]' % e)
+        finally:
+            DbManager.lock.release()
 
     def page_news_by_cid(self, pid, cid, offset, size):
-        sql = 'select id, link from tb_news WHERE pid = %d and cid = %d and createAt = 0 order by id limit %d, %d' % (pid, cid, offset, size)
-        self._cursor.execute(sql)
-        results = self._cursor.fetchall()
-        result = {}
-        for row in results:
-            result[row[0]] = row[1]
-        return result
+        try:
+            DbManager.lock.acquire()
+            sql = 'select id, link from tb_news WHERE pid = %d and cid = %d and createAt = 0 order by id limit %d, %d' % (
+            pid, cid, offset, size)
+            self._cursor.execute(sql)
+            results = self._cursor.fetchall()
+            result = {}
+            for row in results:
+                result[row[0]] = row[1]
+            return result
+        finally:
+            DbManager.lock.release()
 
     def count_news_by_cid(self, pid, cid):
-        sql = 'SELECT count(*) FROM tb_news WHERE pid = %d and cid = %d and createAt = 0' % (pid, cid)
-        self._cursor.execute(sql)
-        return self._cursor.fetchone()[0]
+        try:
+            DbManager.lock.acquire()
+            sql = 'SELECT count(*) FROM tb_news WHERE pid = %d and cid = %d and createAt = 0' % (pid, cid)
+            self._cursor.execute(sql)
+            return self._cursor.fetchone()[0]
+        finally:
+            DbManager.lock.release()
 
     def update_news(self, values):
-        sql = 'UPDATE tb_news SET `title` = %s, content = %s, createAt = %s WHERE id = %s'
-        values = tuple(values)
-        count = self._cursor.executemany(sql, values)
-        self.end()
-        return count
+        try:
+            DbManager.lock.acquire()
+            sql = 'UPDATE tb_news SET `title` = %s, content = %s, createAt = %s WHERE id = %s'
+            values = tuple(values)
+            count = self._cursor.executemany(sql, values)
+            self.end()
+            return count
+        finally:
+            DbManager.lock.release()
 
     # tb_recommend
-
     def begin(self):
         self._conn.autocommit(0)
 

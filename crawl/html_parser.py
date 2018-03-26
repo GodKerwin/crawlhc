@@ -63,7 +63,7 @@ class HtmlParser(object):
                     if os.path.exists(img_dir) is False:
                         os.makedirs(img_dir)
                     try:
-                        html_cont = html_downloader.HtmlDownloader().downloadContent(img_src)
+                        html_cont = html_downloader.HtmlDownloader().download_content(img_src)
                         with open(img_full_path, 'wb') as f:
                             f.write(html_cont)
                             f.close()
