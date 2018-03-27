@@ -1,0 +1,5 @@
+1.项目根目录下运行:python .\main\main.py启动
+
+2.python .\main\main.py 为全爬取模式
+  python .\main\main.py x 为pid[x]爬取模式
+  python .\main\main.py x y 为pid[x],cid[y]爬取模式

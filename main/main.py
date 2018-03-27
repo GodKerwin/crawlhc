@@ -1,14 +1,17 @@
+import datetime
 import threading
 import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor
+import sys
+import os
 
-from crawl import url_manager, html_downloader, html_parser, db_manager
+sys.path.append(os.getcwd())
+from crawl import html_downloader, html_parser, db_manager
 
 
 class Main(object):
     def __init__(self):
-        self.urls = url_manager.UrlManager()
         self.downloader = html_downloader.HtmlDownloader()
         self.parser = html_parser.HtmlParser()
         self.db = db_manager.DbManager()
@@ -42,28 +45,28 @@ class Main(object):
 
     def crawl_all(self):
         print('[crawl_all] begin!!!')
-        pool = ThreadPoolExecutor(10)
         for pid in range(1, self.db.count_pids() + 1):
-            pool.submit(self.crawl_by_pid, pid)
-        pool.shutdown(wait=True)
+            self.crawl_by_pid(pid)
         print('[crawl_all] end!!!')
 
     def crawl_by_pid(self, pid):
         print('%s [crawl_by_pid] begin!!!' % threading.current_thread().name)
         types = self.db.select_category_by_pid(pid)
+        pool = ThreadPoolExecutor(40)
         for type in types:
-            self.collect_url(pid, type[1], type[3])
-            self.crawl_news(pid, type[1])
+            pool.submit(self.collect_and_crawl, pid, type[1], type[3])
+        pool.shutdown(wait=True)
+
         print('%s [crawl_by_pid] end!!!' % threading.current_thread().name)
 
     def crawl_by_cid(self, pid, cid):
         print('[crawl_by_cid] begin!!!')
         type = self.db.select_category_by_cid(pid, cid)
-        self.collect_url(pid, cid, type[3])
-        self.crawl_news(pid, cid)
+        self.collect_and_crawl(pid, cid, type[3])
         print('[crawl_by_cid] end!!!')
 
-    def collect_url(self, pid, cid, link):
+    def collect_and_crawl(self, pid, cid, link):
+        # print('thread[%s] pid[%d] cid[%d] link[%s]' % (threading.current_thread().name, pid, cid, link))
         try:
             print('%s [collect_url] begin!!!' % threading.current_thread().name)
             next_url = link.decode('utf-8')
@@ -76,6 +79,7 @@ class Main(object):
                     break
                 urls, next_url, has_next = self.parser.parse_third_floor(html_cont, next_url)
                 self.db.save_url(pid, cid, urls)
+            self.crawl_news(pid, cid)
         except:
             traceback.print_exc()
             print('%s [collect_url] failed' % threading.current_thread().name)
@@ -83,6 +87,7 @@ class Main(object):
             print('%s [collect_url] end!!!' % threading.current_thread().name)
 
     def crawl_news(self, pid, cid):
+        # print('thread[%s] pid[%d] cid[%d]' % (threading.current_thread().name, pid, cid))
         try:
             print('%s [crawl_news] start!!!' % threading.current_thread().name)
             offset = 0
@@ -96,7 +101,7 @@ class Main(object):
                 for id in url_map:
                     html_cont = self.downloader.download(url_map[id])
                     if html_cont is None:
-                        print('[crawl_news] skip because of 404!')
+                        print('%s [crawl_news] skip because of 404!' % threading.current_thread().name)
                         continue
                     title, content = self.parser.parse_article(html_cont, url_map[id], pid, cid)
                     values.append([title, content, int(time.time()), id])
@@ -104,20 +109,29 @@ class Main(object):
                 offset += page_size
         except:
             traceback.print_exc()
-            print('[crawl_news] failed')
+            print('%s [crawl_news] failed' % threading.current_thread().name)
         finally:
             print('%s [crawl_news] end!!!' % threading.current_thread().name)
 
 
 if __name__ == '__main__':
-    print('[main] start!!!')
+    start_time = datetime.datetime.now()
+    print('[main] start!!! %s' % start_time)
     main = Main()
     try:
         root_url = 'https://m.hc360.com/info/'
-        # main.collect_category(root_url)
-        # main.crawl_by_cid(10, 6)
-        # main.crawl_by_pid(1)
-        main.crawl_all()
+        if len(sys.argv) == 1:
+            print('全爬取模式')
+            main.collect_category(root_url)
+            main.crawl_all()
+        elif len(sys.argv) == 2:
+            print('pid[%s]爬取模式' % sys.argv[1])
+            main.crawl_by_pid(int(sys.argv[1]))
+        elif len(sys.argv) == 3:
+            print('pid[%s],cid[%s]爬取模式' % (sys.argv[1], sys.argv[2]))
+            main.crawl_by_cid(int(sys.argv[1]), int(sys.argv[2]))
     finally:
-        print('[main] end!!!')
+        end_time = datetime.datetime.now()
         main.db.dispose()
+        print('[main] end!!! %s' % end_time)
+        print('共运行%d秒' % (end_time - start_time).seconds)

@@ -3,7 +3,7 @@ import threading
 import pymysql
 from DBUtils.PooledDB import PooledDB
 
-from crawl import config
+from config import config
 
 
 class DbManager(object):

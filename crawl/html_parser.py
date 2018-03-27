@@ -72,5 +72,5 @@ class HtmlParser(object):
                         print('link(%s) img(%s) download fail' % (root_url, img_src))
                     img_no += 1
             else:
-                content += '<p>%s</p>\r\n' % p.text.strip().replace('慧聪网', '')
+                content += '<p>%s</p>\r\n' % p.text.strip().replace('慧聪网', '').replace('慧聪', '')
         return title, content
