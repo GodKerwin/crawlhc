@@ -68,23 +68,23 @@ class Main(object):
     def collect_and_crawl(self, pid, cid, link):
         # print('thread[%s] pid[%d] cid[%d] link[%s]' % (threading.current_thread().name, pid, cid, link))
         try:
-            print('%s [collect_url] begin!!!' % threading.current_thread().name)
+            print('%s [collect_and_crawl] begin!!!' % threading.current_thread().name)
             next_url = link.decode('utf-8')
             has_next = True
             while has_next:
-                print('%s [collect_url] crawl' % threading.current_thread().name, pid, '-', cid, next_url)
+                print('%s [collect_and_crawl] crawl' % threading.current_thread().name, pid, '-', cid, next_url)
                 html_cont = self.downloader.download(next_url)
                 if html_cont is None:
-                    print('[collect_url] stop because of 404!')
+                    print('[collect_and_crawl] stop because of 404!')
                     break
                 urls, next_url, has_next = self.parser.parse_third_floor(html_cont, next_url)
                 self.db.save_url(pid, cid, urls)
             self.crawl_news(pid, cid)
         except:
             traceback.print_exc()
-            print('%s [collect_url] failed' % threading.current_thread().name)
+            print('%s [collect_and_crawl] failed' % threading.current_thread().name)
         finally:
-            print('%s [collect_url] end!!!' % threading.current_thread().name)
+            print('%s [collect_and_crawl] end!!!' % threading.current_thread().name)
 
     def crawl_news(self, pid, cid):
         # print('thread[%s] pid[%d] cid[%d]' % (threading.current_thread().name, pid, cid))

@@ -1,38 +1,18 @@
 import threading
 
-import pymysql
-from DBUtils.PooledDB import PooledDB
+import pymongo
 
 from config import config
 
 
 class DbManager(object):
-    __pool = None
-    lock = threading.RLock()
-
     def __init__(self):
-        try:
-            self._conn = DbManager.__get_conn()
-            self._cursor = self._conn.cursor()
-        except Exception as e:
-            print('Connect failed! ERROR (%s): %s' % (e.args[0], e.args[1]))
-
-    @staticmethod
-    def __get_conn():
-        if DbManager.__pool is None:
-            __pool = PooledDB(creator=pymysql, mincached=1, maxcached=20,
-                              host=config.DBHOST,
-                              port=config.DBPORT,
-                              user=config.DBUSER,
-                              passwd=config.DBPWD,
-                              db=config.DBNAME,
-                              use_unicode=False,
-                              charset=config.DBCHAR)
-        return __pool.connection()
+        self.client = pymongo.MongoClient(host=config.DBHOST, port=config.DBPORT)
+        self.db = self.client.get_database(config.DBNAME)
 
     # tb_category
     def save_category(self, categorys):
-        sql = 'INSERT INTO tb_category (pid,cid,`name`,link) VALUES(%s,%s,%s,%s)'
+        sql = 'INSERT IGNORE INTO tb_category (pid,cid,`name`,link) VALUES(%s,%s,%s,%s)'
         values = tuple(categorys)
         count = self._cursor.executemany(sql, values)
         self.end()
@@ -71,7 +51,7 @@ class DbManager(object):
         try:
             DbManager.lock.acquire()
             sql = 'select id, link from tb_news WHERE pid = %d and cid = %d and createAt = 0 order by id limit %d, %d' % (
-            pid, cid, offset, size)
+                pid, cid, offset, size)
             self._cursor.execute(sql)
             results = self._cursor.fetchall()
             result = {}
