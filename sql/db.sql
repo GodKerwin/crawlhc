@@ -1,15 +1,15 @@
 -- ----------------------------
 -- Create DB for db_news
 -- ----------------------------
-CREATE DATABASE `db_news` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+# CREATE DATABASE `zx` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
 
-use db_news;
+use zx;
 
 -- ----------------------------
--- Table structure for tb_category
+-- Table structure for crawl_category
 -- ----------------------------
-DROP TABLE IF EXISTS `tb_category`;
-CREATE TABLE `tb_category` (
+DROP TABLE IF EXISTS `crawl_category`;
+CREATE TABLE `crawl_category` (
   `pid` int(11) NOT NULL COMMENT '一级类目ID',
   `cid` int(11) NOT NULL COMMENT '二级分类ID',
   `name`  varchar(32) NOT NULL DEFAULT '' COMMENT '类目名称' ,
@@ -19,10 +19,10 @@ CREATE TABLE `tb_category` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='类目表';
 
 -- ----------------------------
--- Table structure for tb_news
+-- Table structure for crawl_news
 -- ----------------------------
-DROP TABLE IF EXISTS `tb_news`;
-CREATE TABLE `tb_news` (
+DROP TABLE IF EXISTS `crawl_news`;
+CREATE TABLE `crawl_news` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '主键',
   `pid` int(11) NOT NULL COMMENT '一级类目ID',
   `cid`  int(11) NOT NULL COMMENT '二级分类ID' ,
@@ -36,10 +36,10 @@ CREATE TABLE `tb_news` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='资讯表';
 
 -- ----------------------------
--- Table structure for tb_recommend
+-- Table structure for crawl_recommend
 -- ----------------------------
-# DROP TABLE IF EXISTS `tb_recommend`;
-# CREATE TABLE `tb_recommend` (
+# DROP TABLE IF EXISTS `crawl_recommend`;
+# CREATE TABLE `crawl_recommend` (
 #   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '主键',
 #   `category` varchar(32) NOT NULL DEFAULT '' COMMENT '主分类',
 #   `subcategory`  varchar(32) NOT NULL DEFAULT '' COMMENT '二级分类' ,

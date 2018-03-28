@@ -57,7 +57,7 @@ class HtmlParser(object):
                 img = p.find('img')
                 if img:
                     img_src = img.get('src').strip()
-                    img_dir = './p%d/c%d/' % (pid, cid)
+                    img_dir = './pic/p%d/c%d/' % (pid, cid)
                     img_name = '%s%s' % (uuid.uuid1(), os.path.splitext(img_src)[1])
                     img_full_path = img_dir + img_name
                     if os.path.exists(img_dir) is False:

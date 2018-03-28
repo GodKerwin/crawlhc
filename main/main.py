@@ -123,7 +123,7 @@ if __name__ == '__main__':
         if len(sys.argv) == 1:
             print('全爬取模式')
             main.collect_category(root_url)
-            main.crawl_all()
+            # main.crawl_all()
         elif len(sys.argv) == 2:
             print('pid[%s]爬取模式' % sys.argv[1])
             main.crawl_by_pid(int(sys.argv[1]))
