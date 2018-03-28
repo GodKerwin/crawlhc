@@ -52,10 +52,11 @@ class Main(object):
     def crawl_by_pid(self, pid):
         print('%s [crawl_by_pid] begin!!!' % threading.current_thread().name)
         types = self.db.select_category_by_pid(pid)
-        pool = ThreadPoolExecutor(10)
+        # pool = ThreadPoolExecutor(10)
         for type in types:
-            pool.submit(self.collect_and_crawl, pid, type[1], type[3])
-        pool.shutdown(wait=True)
+            self.collect_and_crawl(pid, type[1], type[3])
+            # pool.submit(self.collect_and_crawl, pid, type[1], type[3])
+        # pool.shutdown(wait=True)
 
         print('%s [crawl_by_pid] end!!!' % threading.current_thread().name)
 
@@ -94,7 +95,8 @@ class Main(object):
             page_size = 20
             total = self.db.count_news_by_cid(pid, cid)
             while offset < total:
-                values = []
+                insert_values = []
+                update_values = []
                 url_map = self.db.page_news_by_cid(pid, cid, 0, page_size)
                 print('%s [crawl_news] crawl article pid(%d) cid(%d) page(%d - %d) total(%d)' % (
                     threading.current_thread().name, pid, cid, offset + 1, offset + page_size, total))
@@ -104,8 +106,10 @@ class Main(object):
                         print('%s [crawl_news] skip because of 404!' % threading.current_thread().name)
                         continue
                     title, content = self.parser.parse_article(html_cont, url_map[id], pid, cid)
-                    values.append([title, content, int(time.time()), id])
-                self.db.update_news(values)
+                    update_values.append([int(time.time()), id])
+                    insert_values.append([url_map[id], title, content])
+                self.db.update_news(update_values)
+                self.db.save_news_content(insert_values)
                 offset += page_size
         except:
             traceback.print_exc()

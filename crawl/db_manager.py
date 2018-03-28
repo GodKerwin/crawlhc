@@ -57,7 +57,7 @@ class DbManager(object):
     def save_url(self, pid, cid, urls):
         try:
             DbManager.lock.acquire()
-            sql = 'INSERT IGNORE INTO tb_news (pid, cid, link) VALUES (%s, %s, %s)'
+            sql = 'INSERT INTO tb_news (pid, cid, link) VALUES (%s, %s, %s)'
             values = tuple([[pid, cid, url] for url in urls])
             count = self._cursor.executemany(sql, values)
             self.end()
@@ -93,11 +93,25 @@ class DbManager(object):
     def update_news(self, values):
         try:
             DbManager.lock.acquire()
-            sql = 'UPDATE tb_news SET `title` = %s, content = %s, createAt = %s WHERE id = %s'
+            sql = 'UPDATE tb_news SET createAt = %s WHERE id = %s'
             values = tuple(values)
             count = self._cursor.executemany(sql, values)
             self.end()
             return count
+        finally:
+            DbManager.lock.release()
+
+    # tb_news_content
+    def save_news_content(self, values):
+        try:
+            DbManager.lock.acquire()
+            sql = 'INSERT IGNORE INTO tb_news_content (link, title, content) VALUES (%s, %s, %s)'
+            values = tuple(values)
+            count = self._cursor.executemany(sql, values)
+            self.end()
+            return count
+        except Exception as e:
+            print('[save_news_content] fail! message[%s]' % e)
         finally:
             DbManager.lock.release()
 
