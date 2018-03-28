@@ -1,3 +1,4 @@
+import logging
 import uuid
 from urllib.parse import urljoin
 import os
@@ -12,7 +13,7 @@ class HtmlParser(object):
         list_url = urljoin(root_url, urls.pop(-1).get('href'))
         html_cont = html_downloader.HtmlDownloader().download(list_url)
         if html_cont is None:
-            print('[parse_first_floor] skip because of 404! link[%s]' % list_url)
+            logging.info('[parse_first_floor] skip because of 404! link[%s]' % list_url)
             return None
         soup = BeautifulSoup(html_cont, 'lxml')
         urls = soup.select('section > div.ListBox2 > dl > dd > a')
@@ -25,7 +26,7 @@ class HtmlParser(object):
         list_url = urljoin(root_url, urls.pop(-1).get('href'))
         html_cont = html_downloader.HtmlDownloader().download(list_url)
         if html_cont is None:
-            print('[parse_second_floor] skip because of 404! link[%s]' % list_url)
+            logging.info('[parse_second_floor] skip because of 404! link[%s]' % list_url)
             return None
         soup = BeautifulSoup(html_cont, 'lxml')
         urls = soup.select('section > div.ListBox2 > dl > dd > a')
@@ -69,7 +70,7 @@ class HtmlParser(object):
                             f.close()
                         content += '<p><img src=\'%s\'></p>\r\n' % img_full_path
                     except:
-                        print('link(%s) img(%s) download fail' % (root_url, img_src))
+                        logging.info('link(%s) img(%s) download fail' % (root_url, img_src))
                     img_no += 1
             else:
                 content += '<p>%s</p>\r\n' % p.text.strip().replace('慧聪网', '').replace('慧聪', '')
