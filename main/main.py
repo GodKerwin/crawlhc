@@ -52,7 +52,7 @@ class Main(object):
     def crawl_by_pid(self, pid):
         print('%s [crawl_by_pid] begin!!!' % threading.current_thread().name)
         types = self.db.select_category_by_pid(pid)
-        pool = ThreadPoolExecutor(40)
+        pool = ThreadPoolExecutor(10)
         for type in types:
             pool.submit(self.collect_and_crawl, pid, type[1], type[3])
         pool.shutdown(wait=True)

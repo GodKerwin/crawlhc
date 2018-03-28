@@ -57,7 +57,7 @@ class DbManager(object):
     def save_url(self, pid, cid, urls):
         try:
             DbManager.lock.acquire()
-            sql = 'INSERT INTO tb_news (pid, cid, link) VALUES (%s, %s, %s)'
+            sql = 'INSERT IGNORE INTO tb_news (pid, cid, link) VALUES (%s, %s, %s)'
             values = tuple([[pid, cid, url] for url in urls])
             count = self._cursor.executemany(sql, values)
             self.end()
