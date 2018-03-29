@@ -1,3 +1,4 @@
+import logging
 import threading
 
 import pymysql
@@ -15,7 +16,7 @@ class DbManager(object):
             self._conn = DbManager.__get_conn()
             self._cursor = self._conn.cursor()
         except Exception as e:
-            print('Connect failed! ERROR (%s): %s' % (e.args[0], e.args[1]))
+            logging.error('Connect failed! ERROR (%s): %s' % (e.args[0], e.args[1]))
 
     @staticmethod
     def __get_conn():
@@ -63,7 +64,7 @@ class DbManager(object):
             self.end()
             return count
         except Exception as e:
-            print('[save_url] fail! message[%s]' % e)
+            logging.error('[save_url] fail! message[%s]' % e)
         finally:
             DbManager.lock.release()
 
